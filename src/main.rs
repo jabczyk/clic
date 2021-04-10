@@ -1,4 +1,8 @@
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
 use std::env;
+
+const COMMAND_HELP: &str = "help";
 
 fn main() {
     let arguments: Vec<String> = env::args().collect();
@@ -9,12 +13,48 @@ fn main() {
 
 fn execute_command(arguments: &[String]) {
     if arguments.is_empty() {
-        panic!("Shell mode is not yet supported");
+        enter_shell_mode();
+        return;
     }
 
     match arguments[0].as_str() {
-        "help" => print_help(arguments.get(1).map(String::as_str)),
+        COMMAND_HELP => print_help(arguments.get(1).map(String::as_str)),
         expression => evaluate_expression(expression),
+    }
+}
+
+fn enter_shell_mode() {
+    let mut rl = Editor::<()>::new();
+    if rl.load_history("history.txt").is_err() {}
+
+    loop {
+        let readline = rl.readline("> ");
+        match readline {
+            Ok(line) => {
+                rl.add_history_entry(line.as_str());
+
+                let arguments = parse_shell_arguments(line);
+                execute_command(&arguments);
+            }
+            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => break,
+            Err(err) => {
+                println!("Oops, something went wrong! Error: {:?}", err);
+                break;
+            }
+        }
+    }
+
+    rl.save_history("history.txt").unwrap();
+}
+
+fn parse_shell_arguments(line: String) -> Vec<String> {
+    let arguments: Vec<String> = line.split_whitespace().map(String::from).collect();
+
+    // allow whitespace in expressions, without the quotation marks
+    match arguments.get(0).map(String::as_str) {
+        None => vec![],
+        Some(COMMAND_HELP) => arguments,
+        Some(_) => vec![line],
     }
 }
 
