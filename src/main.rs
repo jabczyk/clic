@@ -1,10 +1,15 @@
+mod store;
+
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::env;
+use store::{create_config_dir, get_history_path};
 
 const COMMAND_HELP: &str = "help";
 
 fn main() {
+    create_config_dir();
+
     let arguments: Vec<String> = env::args().collect();
 
     // the first argument is the executable path, it can be ignored
@@ -25,7 +30,9 @@ fn execute_command(arguments: &[String]) {
 
 fn enter_shell_mode() {
     let mut rl = Editor::<()>::new();
-    if rl.load_history("history.txt").is_err() {}
+
+    let history_path = get_history_path();
+    if rl.load_history(&history_path).is_err() {}
 
     loop {
         let readline = rl.readline("> ");
@@ -44,7 +51,7 @@ fn enter_shell_mode() {
         }
     }
 
-    rl.save_history("history.txt").unwrap();
+    rl.save_history(&history_path).unwrap();
 }
 
 fn parse_shell_arguments(line: String) -> Vec<String> {
