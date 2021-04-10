@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 meval = "0.2"
+rustyline = "8.0.0"
+directories = "3.0.1"
+
