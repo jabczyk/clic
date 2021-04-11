@@ -1,7 +1,9 @@
 #![feature(with_options)]
 
+mod context;
 mod store;
 
+use context::Context;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::env;
@@ -83,5 +85,10 @@ Basic usage
 }
 
 fn evaluate_expression(expression: &str) {
-    println!("evaluated: {}", meval::eval_str(expression).unwrap());
+    let context = Context::build();
+
+    match meval::eval_str_with_context(expression, context.get()) {
+        Ok(result) => println!("= {}", result),
+        Err(message) => println!("Oops! {}", message),
+    }
 }
