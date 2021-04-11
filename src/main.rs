@@ -1,9 +1,11 @@
+#![feature(with_options)]
+
 mod store;
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::env;
-use store::{create_config_dir, get_history_path};
+use store::{create_config_dir, get_config_path};
 
 const COMMAND_HELP: &str = "help";
 
@@ -31,7 +33,7 @@ fn execute_command(arguments: &[String]) {
 fn enter_shell_mode() {
     let mut rl = Editor::<()>::new();
 
-    let history_path = get_history_path();
+    let history_path = get_config_path("history.txt");
     if rl.load_history(&history_path).is_err() {}
 
     loop {
