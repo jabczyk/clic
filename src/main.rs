@@ -11,6 +11,7 @@ use store::{create_config_dir, get_config_path};
 
 const COMMAND_HELP: &str = "help";
 const COMMAND_SET: &str = "set";
+const COMMAND_CONSTS: &str = "consts";
 
 fn main() {
     create_config_dir();
@@ -30,6 +31,7 @@ fn execute_command(arguments: &[String]) {
     match arguments[0].as_str() {
         COMMAND_HELP => print_help(arguments.get(1).map(String::as_str)),
         COMMAND_SET => set_constant(&arguments[1..]),
+        COMMAND_CONSTS => print_constants(),
         expression => evaluate_expression(expression),
     }
 }
@@ -83,7 +85,8 @@ Basic usage
     clic help [topic] - view help
 
 Constants
-    clic set <name> <value> - create a custom constant"#
+    clic set <name> <value> - create a custom constant
+    clic consts - view custom constants"#
             );
         }
     }
@@ -100,6 +103,16 @@ fn set_constant(arguments: &[String]) {
 
     let mut context = Context::build();
     context.set_constant(arguments[0].to_owned(), value);
+}
+
+fn print_constants() {
+    let context = Context::build();
+
+    println!("Custom constants");
+    for (constant, value) in context.get_constants() {
+        println!("    {} = {}", constant, value);
+    }
+    println!("For built-in constants, please refer to https://github.com/rekka/meval-rs#supported-expressions");
 }
 
 fn evaluate_expression(expression: &str) {

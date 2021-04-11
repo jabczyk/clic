@@ -23,10 +23,14 @@ impl Context {
         let mut context = meval::Context::new();
 
         for (variable, value) in &self.variables {
-          context.var(variable, *value);
+            context.var(variable, *value);
         }
 
         context
+    }
+
+    pub fn get_constants(&self) -> &HashMap<String, f64> {
+        &self.variables
     }
 
     pub fn set_constant(&mut self, variable: String, value: f64) {
