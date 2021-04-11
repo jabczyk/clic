@@ -10,6 +10,7 @@ use std::env;
 use store::{create_config_dir, get_config_path};
 
 const COMMAND_HELP: &str = "help";
+const COMMAND_SET: &str = "set";
 
 fn main() {
     create_config_dir();
@@ -28,6 +29,7 @@ fn execute_command(arguments: &[String]) {
 
     match arguments[0].as_str() {
         COMMAND_HELP => print_help(arguments.get(1).map(String::as_str)),
+        COMMAND_SET => set_constant(&arguments[1..]),
         expression => evaluate_expression(expression),
     }
 }
@@ -64,7 +66,7 @@ fn parse_shell_arguments(line: String) -> Vec<String> {
     // allow whitespace in expressions, without the quotation marks
     match arguments.get(0).map(String::as_str) {
         None => vec![],
-        Some(COMMAND_HELP) => arguments,
+        Some(COMMAND_HELP) | Some(COMMAND_SET) => arguments,
         Some(_) => vec![line],
     }
 }
@@ -78,10 +80,26 @@ fn print_help(topic: Option<&str>) {
 Basic usage
     clic - enter shell mode
     clic "sqrt(3)" - evaluate a math expresssion
-    clic help [topic] - view help"#
+    clic help [topic] - view help
+
+Constants
+    clic set <name> <value> - create a custom constant"#
             );
         }
     }
+}
+
+fn set_constant(arguments: &[String]) {
+    let value = match arguments[1].parse::<f64>() {
+        Ok(v) => v,
+        Err(_) => {
+            println!("Error: Invalid constant value");
+            return;
+        }
+    };
+
+    let mut context = Context::build();
+    context.set_constant(arguments[0].to_owned(), value);
 }
 
 fn evaluate_expression(expression: &str) {

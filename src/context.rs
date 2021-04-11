@@ -22,4 +22,13 @@ impl Context {
     pub fn get(&self) -> &HashMap<String, f64> {
         &self.variables
     }
+
+    pub fn set_constant(&mut self, variable: String, value: f64) {
+        self.variables.insert(variable, value);
+        self.persist();
+    }
+
+    fn persist(&self) {
+        persist_json(CONTEXT_FILE, &self)
+    }
 }
