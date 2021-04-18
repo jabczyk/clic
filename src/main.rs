@@ -1,6 +1,7 @@
 #![feature(with_options)]
 
 mod cli;
+mod colors;
 mod constants;
 mod context;
 mod store;
