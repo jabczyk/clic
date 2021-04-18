@@ -101,10 +101,17 @@ impl Cli {
     }
 
     fn set_constant(&mut self, arguments: &[String]) {
-        let value = match arguments[1].parse::<f64>() {
+        let value = match arguments.get(1) {
+            Some(v) => v,
+            None => {
+                self.colors.print_fail("Error: No value provided".to_owned());
+                return;
+            }
+        };
+        let value = match value.parse::<f64>() {
             Ok(v) => v,
             Err(_) => {
-                println!("Error: Invalid constant value");
+                self.colors.print_fail("Error: Invalid constant value".to_owned());
                 return;
             }
         };
