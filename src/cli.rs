@@ -1,5 +1,5 @@
 use crate::colors::Colors;
-use crate::constants::{COMMAND_CONSTS, COMMAND_HELP, COMMAND_SET};
+use crate::constants::{COMMAND_COLOR, COMMAND_CONSTS, COMMAND_HELP, COMMAND_SET};
 use crate::context::Context;
 use crate::store::get_config_path;
 use rustyline::error::ReadlineError;
@@ -28,6 +28,7 @@ impl Cli {
             COMMAND_HELP => self.print_help(arguments.get(1).map(String::as_str)),
             COMMAND_SET => self.set_constant(&arguments[1..]),
             COMMAND_CONSTS => self.print_constants(),
+            COMMAND_COLOR => self.set_color(&arguments[1..]),
             expression => self.evaluate_expression(expression),
         }
     }
@@ -64,7 +65,7 @@ impl Cli {
         // allow whitespace in expressions, without the quotation marks
         match arguments.get(0).map(String::as_str) {
             None => vec![],
-            Some(COMMAND_HELP) | Some(COMMAND_SET) => arguments,
+            Some(COMMAND_HELP) | Some(COMMAND_SET) | Some(COMMAND_COLOR) => arguments,
             Some(_) => vec![line],
         }
     }
@@ -82,12 +83,18 @@ impl Cli {
 
 {constants}
     clic set <name> <value> - create a custom constant
-    clic consts - view custom constants"#,
+    clic consts - view custom constants
+
+{colors}
+    clic color <primary/secondary/failure> <color> - set a color
+    ~ For color names, please refer to {colors_link}"#,
                     heading = self
                         .colors
                         .primary(String::from("Clic - A simple CLI calculator")),
                     basic_usage = self.colors.secondary(String::from("Basic usage")),
-                    constants = self.colors.secondary(String::from("Constants"))
+                    constants = self.colors.secondary(String::from("Constants")),
+                    colors = self.colors.secondary(String::from("Colors")),
+                    colors_link = self.colors.secondary(String::from("https://github.com/mackwic/colored#colors"))
                 );
             }
         }
@@ -116,6 +123,19 @@ impl Cli {
                 "https://github.com/rekka/meval-rs#supported-expressions"
             ))
         );
+    }
+
+    fn set_color(&mut self, arguments: &[String]) {
+        let value = match arguments.get(1) {
+            Some(v) => v,
+            None => {
+                self.colors
+                    .print_fail("Usage: color <primary/secondary/failure> <color>".to_owned());
+                return;
+            }
+        };
+
+        self.colors.set(&arguments[0], value.to_owned());
     }
 
     fn evaluate_expression(&self, expression: &str) {

@@ -1,5 +1,10 @@
+use crate::store::{load_from_json, persist_json};
 use colored::*;
+use serde::{Deserialize, Serialize};
 
+const COLORS_FILE: &str = "colors.json";
+
+#[derive(Serialize, Deserialize)]
 pub struct Colors {
     primary: String,
     secondary: String,
@@ -8,10 +13,15 @@ pub struct Colors {
 
 impl Colors {
     pub fn build() -> Self {
-        Self {
-            primary: String::from("cyan"),
-            secondary: String::from("yellow"),
-            failure: String::from("red"),
+        match load_from_json::<Self>(COLORS_FILE) {
+            Ok(ctx) => ctx,
+            Err(_) => {
+                Self {
+                    primary: String::from("cyan"),
+                    secondary: String::from("yellow"),
+                    failure: String::from("red"),
+                }
+            }
         }
     }
 
@@ -25,6 +35,20 @@ impl Colors {
         let color_res: Result<Color, ()> = color_string.parse();
 
         color_res.unwrap_or(Color::White)
+    }
+
+    pub fn set(&mut self, key: &str, val: String) {
+        match key {
+            "primary" => self.primary = val,
+            "secondary" => self.secondary = val,
+            "failure" => self.failure = val,
+            _ => {
+                self.print_fail("Invalid key, available: primary, secondary, failure".to_owned());
+                return;
+            }
+        };
+
+        persist_json(COLORS_FILE, self);
     }
 
     pub fn primary(&self, text: String) -> ColoredString {
