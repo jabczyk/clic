@@ -1,3 +1,4 @@
+use crate::colors::Colors;
 use crate::constants::{COMMAND_CONSTS, COMMAND_HELP, COMMAND_SET};
 use crate::context::Context;
 use crate::store::get_config_path;
@@ -6,12 +7,14 @@ use rustyline::Editor;
 
 pub struct Cli {
     context: Context,
+    colors: Colors,
 }
 
 impl Cli {
     pub fn new() -> Self {
         Self {
             context: Context::build(),
+            colors: Colors::build(),
         }
     }
 
@@ -22,7 +25,7 @@ impl Cli {
         }
 
         match arguments[0].as_str() {
-            COMMAND_HELP => Self::print_help(arguments.get(1).map(String::as_str)),
+            COMMAND_HELP => self.print_help(arguments.get(1).map(String::as_str)),
             COMMAND_SET => self.set_constant(&arguments[1..]),
             COMMAND_CONSTS => self.print_constants(),
             expression => self.evaluate_expression(expression),
@@ -46,7 +49,8 @@ impl Cli {
                 }
                 Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => break,
                 Err(err) => {
-                    println!("Oops, something went wrong! Error: {:?}", err);
+                    self.colors
+                        .print_fail(format!("Unexpected error: {:?}", err));
                     break;
                 }
             }
@@ -65,20 +69,25 @@ impl Cli {
         }
     }
 
-    fn print_help(topic: Option<&str>) {
+    fn print_help(&self, topic: Option<&str>) {
         match topic {
             Some(_) | None => {
                 println!(
-                    r#"Clic - A simple CLI calculator
+                    r#"{heading}
 
-Basic usage
+{basic_usage}
     clic - enter shell mode
     clic "sqrt(3)" - evaluate a math expresssion
     clic help [topic] - view help
 
-Constants
+{constants}
     clic set <name> <value> - create a custom constant
-    clic consts - view custom constants"#
+    clic consts - view custom constants"#,
+                    heading = self
+                        .colors
+                        .primary(String::from("Clic - A simple CLI calculator")),
+                    basic_usage = self.colors.secondary(String::from("Basic usage")),
+                    constants = self.colors.secondary(String::from("Constants"))
                 );
             }
         }
@@ -97,17 +106,22 @@ Constants
     }
 
     fn print_constants(&self) {
-        println!("Custom constants");
+        println!("{}", self.colors.primary(String::from("Custom constants")));
         for (constant, value) in self.context.get_constants() {
             println!("    {} = {}", constant, value);
         }
-        println!("For built-in constants, please refer to https://github.com/rekka/meval-rs#supported-expressions");
+        println!(
+            "For built-in constants, please refer to {link}",
+            link = self.colors.secondary(String::from(
+                "https://github.com/rekka/meval-rs#supported-expressions"
+            ))
+        );
     }
 
     fn evaluate_expression(&self, expression: &str) {
         match meval::eval_str_with_context(expression, self.context.get()) {
-            Ok(result) => println!("= {}", result),
-            Err(message) => println!("Oops! {}", message),
+            Ok(result) => println!("{}", self.colors.primary(format!("= {}", result))),
+            Err(message) => self.colors.print_fail(format!("{}", message)),
         }
     }
 }
